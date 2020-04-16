@@ -126,7 +126,7 @@ func TestEthTxABIEncodeAdapter_Perform_ConfirmedWithJSON(t *testing.T) {
 
 	expectedAsHex := strings.Join(append(selector, values...), "")
 	t.Parallel()
-	app, cleanup := cltest.NewApplicationWithKey(t)
+	app, cleanup := cltest.NewApplicationWithRandomKey(t)
 	defer cleanup()
 	store := app.Store
 

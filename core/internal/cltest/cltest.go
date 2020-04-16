@@ -8,6 +8,7 @@ import (
 	"io"
 	"io/ioutil"
 	"math/big"
+	"math/rand"
 	"net/http"
 	"net/http/httptest"
 	"net/url"
@@ -31,6 +32,8 @@ import (
 	"github.com/smartcontractkit/chainlink/core/utils"
 	"github.com/smartcontractkit/chainlink/core/web"
 
+	"github.com/DATA-DOG/go-txdb"
+	"github.com/ethereum/go-ethereum/accounts"
 	"github.com/ethereum/go-ethereum/common"
 	"github.com/ethereum/go-ethereum/common/hexutil"
 	"github.com/gin-gonic/gin"
@@ -51,8 +54,6 @@ import (
 const (
 	// RootDir the root directory for cltest
 	RootDir = "/tmp/chainlink_test"
-	// APIEmail of the API user
-	APIEmail = "email@test.net"
 	// APIKey of the API user
 	APIKey = "2d25e62eaf9143e993acaf48691564b2"
 	// APISecret of the API user.
@@ -74,6 +75,30 @@ func init() {
 	gomega.SetDefaultEventuallyTimeout(3 * time.Second)
 	lvl := logLevelFromEnv()
 	logger.SetLogger(CreateTestLogger(lvl))
+	// Register txdb as dialect wrapping postgres
+	// See: DialectTransactionWrappedPostgres
+	config := orm.NewConfig()
+	if config.DatabaseURL() == "" {
+		panic("You must set DATABASE_URL env var to point to your test database. HINT: Try DATABASE_URL=postgresql://postgres@localhost:5432/chainlink_test?sslmode=disable")
+	}
+	// Disable SavePoints because they cause random errors for reasons I cannot fathom
+	// Perhaps txdb's built-in transaction emulation is broken in some subtle way?
+	// NOTE: That this will cause transaction BEGIN/ROLLBACK to effectively be
+	// a no-op, this should have no negative impact on normal test operation
+	// FIXME: Can SavePoints be enabled again now that deadlocks are fixed?
+	txdb.Register("cloudsqlpostgres", "postgres", config.DatabaseURL(), txdb.SavePointOption(nil))
+
+	// Seed the random number generator, otherwise separate modules will take
+	// the same advisory locks when tested with `go test -p N` for N > 1
+	seed := time.Now().UTC().UnixNano()
+	logger.Debug("Using seed: %v", seed)
+	rand.Seed(seed)
+}
+
+// APIEmail returns an email address for the given config
+// It must be different each time to avoid deadlocks on the user email unique index
+func APIEmail(id int64) string {
+	return fmt.Sprintf("email-%v@example.com", id)
 }
 
 func logLevelFromEnv() zapcore.Level {
@@ -92,27 +117,46 @@ type TestConfig struct {
 }
 
 // NewConfig returns a new TestConfig
-func NewConfig(t testing.TB) (*TestConfig, func()) {
+func NewConfig(t testing.TB, options ...interface{}) (*TestConfig, func()) {
 	t.Helper()
 
 	wsserver, cleanup := newWSServer()
-	return NewConfigWithWSServer(t, wsserver), cleanup
+	return NewConfigWithWSServer(t, wsserver, options...), cleanup
+}
+
+// TODO: Consider renaming?
+func NewRandomInt64() int64 {
+	id := rand.Int63()
+	return id
 }
 
 // NewTestConfig returns a test configuration
-func NewTestConfig(t testing.TB) *TestConfig {
+func NewTestConfig(t testing.TB, options ...interface{}) *TestConfig {
 	t.Helper()
 
 	count := atomic.AddUint64(&storeCounter, 1)
 	rootdir := filepath.Join(RootDir, fmt.Sprintf("%d-%d", time.Now().UnixNano(), count))
 	rawConfig := orm.NewConfig()
+
+	rawConfig.Dialect = orm.DialectTransactionWrappedPostgres
+	for _, opt := range options {
+		switch v := opt.(type) {
+		case orm.DialectName:
+			rawConfig.Dialect = v
+		}
+	}
+
+	uniqueRandomID := NewRandomInt64()
+	// Unique advisory lock is required otherwise all tests will block each other
+	rawConfig.AdvisoryLockID = uniqueRandomID
+	// Cursor name must be different in each test to prevent deadlock
+	rawConfig.LogBroadcasterCursorName = fmt.Sprintf("logBroadcaster_%v", uniqueRandomID)
+
 	rawConfig.Set("BRIDGE_RESPONSE_URL", "http://localhost:6688")
 	rawConfig.Set("ETH_CHAIN_ID", 3)
 	rawConfig.Set("CHAINLINK_DEV", true)
 	rawConfig.Set("ETH_GAS_BUMP_THRESHOLD", 3)
-	rawConfig.Set("LOG_LEVEL", orm.LogLevel{Level: zapcore.DebugLevel})
-	rawConfig.Set("LOG_SQL", false)
-	rawConfig.Set("LOG_SQL_MIGRATIONS", false)
+	rawConfig.Set("MIGRATE_DATABASE", false)
 	rawConfig.Set("MINIMUM_SERVICE_DURATION", "24h")
 	rawConfig.Set("MIN_INCOMING_CONFIRMATIONS", 1)
 	rawConfig.Set("MIN_OUTGOING_CONFIRMATIONS", 6)
@@ -125,10 +169,10 @@ func NewTestConfig(t testing.TB) *TestConfig {
 }
 
 // NewConfigWithWSServer return new config with specified wsserver
-func NewConfigWithWSServer(t testing.TB, wsserver *httptest.Server) *TestConfig {
+func NewConfigWithWSServer(t testing.TB, wsserver *httptest.Server, options ...interface{}) *TestConfig {
 	t.Helper()
 
-	config := NewTestConfig(t)
+	config := NewTestConfig(t, options...)
 	config.SetEthereumServer(wsserver)
 	return config
 }
@@ -152,6 +196,7 @@ type TestApplication struct {
 	connectedChannel chan struct{}
 	Started          bool
 	EthMock          *EthMock
+	Account          accounts.Account
 }
 
 func newWSServer() (*httptest.Server, func()) {
@@ -197,33 +242,56 @@ func NewApplication(t testing.TB, flags ...string) (*TestApplication, func()) {
 	}
 }
 
-// NewApplicationWithKey creates a new TestApplication along with a new config
-func NewApplicationWithKey(t testing.TB, flags ...string) (*TestApplication, func()) {
+// NewApplicationWithFixtureKey creates a new application with the given key
+// Careful not to use the same key in different tests, since this may result in
+// deadlocks when running tests concurrently (keys.address unique index)
+func NewApplicationWithFixtureKey(t testing.TB, keyStoreJSON string) (*TestApplication, func()) {
 	t.Helper()
 
 	config, cfgCleanup := NewConfig(t)
-	app, cleanup := NewApplicationWithConfigAndKey(t, config, flags...)
+	app, cleanup := NewApplicationWithConfig(t, config)
+	app.ImportKey(keyStoreJSON)
 	return app, func() {
 		cleanup()
 		cfgCleanup()
 	}
 }
 
-// NewApplicationWithConfigAndKey creates a new TestApplication with the given testconfig
+// NewApplicationWithRandomKey creates a new TestApplication along with a new config
+func NewApplicationWithRandomKey(t testing.TB, flags ...string) (*TestApplication, func()) {
+	t.Helper()
+
+	config, cfgCleanup := NewConfig(t)
+	app, cleanup := NewApplicationWithConfigAndRandomKey(t, config, flags...)
+	return app, func() {
+		cleanup()
+		cfgCleanup()
+	}
+}
+
+// NewApplicationWithConfigAndRandomKey creates a new TestApplication with the given testconfig
 // it will also provide an unlocked account on the keystore
-func NewApplicationWithConfigAndKey(t testing.TB, tc *TestConfig, flags ...string) (*TestApplication, func()) {
+func NewApplicationWithConfigAndRandomKey(t testing.TB, tc *TestConfig, flags ...string) (*TestApplication, func()) {
 	t.Helper()
 
 	app, cleanup := NewApplicationWithConfig(t, tc, flags...)
-	app.ImportKey(key3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea)
+	// FIXME: We need to generate different, random, valid keys here.
+	// NewAccount consumes a large amount of entropy by requiring
+	// cryptographically secure random numbers which might cause test slowdowns
+	// on CI. Not sure how to manage this.
+	acct, err := app.Store.KeyStore.NewAccount(Password)
+	if err != nil {
+		t.Fatal(err)
+	}
+	app.Account = acct
+	// fmt.Println(randomKey())
+	// app.ImportKey(randomKey())
 	return app, cleanup
 }
 
 // NewApplicationWithConfig creates a New TestApplication with specified test config
 func NewApplicationWithConfig(t testing.TB, tc *TestConfig, flags ...string) (*TestApplication, func()) {
 	t.Helper()
-
-	cleanupDB := PrepareTestDB(tc)
 
 	ta := &TestApplication{t: t, connectedChannel: make(chan struct{}, 1)}
 	app := chainlink.NewApplication(tc.Config, func(app chainlink.Application) {
@@ -241,7 +309,6 @@ func NewApplicationWithConfig(t testing.TB, tc *TestConfig, flags ...string) (*T
 	ta.wsServer = tc.wsServer
 	return ta, func() {
 		require.NoError(t, ta.Stop())
-		cleanupDB()
 		require.True(t, ta.EthMock.AllCalled(), ta.EthMock.Remaining())
 	}
 }
@@ -308,7 +375,7 @@ func (ta *TestApplication) Stop() error {
 }
 
 func (ta *TestApplication) MustSeedUserSession() models.User {
-	mockUser := MustUser(APIEmail, Password)
+	mockUser := MustUser(ta.Config.AdvisoryLockID)
 	require.NoError(ta.t, ta.Store.SaveUser(&mockUser))
 	session := NewSession(APISessionID)
 	require.NoError(ta.t, ta.Store.SaveSession(&session))
@@ -318,7 +385,7 @@ func (ta *TestApplication) MustSeedUserSession() models.User {
 // MustSeedUserAPIKey creates and returns a User with their API Token Key and
 // Secret generated.
 func (ta *TestApplication) MustSeedUserAPIKey() models.User {
-	mockUser := MustUser(APIEmail, Password)
+	mockUser := MustUser(ta.Config.AdvisoryLockID)
 	apiToken := auth.Token{AccessKey: APIKey, Secret: APISecret}
 	require.NoError(ta.t, mockUser.SetAuthToken(&apiToken))
 	require.NoError(ta.t, ta.Store.SaveUser(&mockUser))
@@ -406,19 +473,17 @@ func (ta *TestApplication) MustCreateJobRun(txHashBytes []byte, blockHashBytes [
 
 // NewStoreWithConfig creates a new store with given config
 func NewStoreWithConfig(config *TestConfig) (*strpkg.Store, func()) {
-	cleanupDB := PrepareTestDB(config)
 	s := strpkg.NewInsecureStore(config.Config, gracefulpanic.NewSignal())
 	return s, func() {
 		cleanUpStore(config.t, s)
-		cleanupDB()
 	}
 }
 
 // NewStore creates a new store
-func NewStore(t testing.TB) (*strpkg.Store, func()) {
+func NewStore(t testing.TB, options ...interface{}) (*strpkg.Store, func()) {
 	t.Helper()
 
-	c, cleanup := NewConfig(t)
+	c, cleanup := NewConfig(t, options...)
 	store, storeCleanup := NewStoreWithConfig(c)
 	return store, func() {
 		storeCleanup()

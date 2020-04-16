@@ -19,9 +19,9 @@ func TestTerminalCookieAuthenticator_AuthenticateWithoutSession(t *testing.T) {
 		name, email, pwd string
 	}{
 		{"bad email", "notreal", cltest.Password},
-		{"bad pwd", cltest.APIEmail, "mostcommonwrongpwdever"},
+		{"bad pwd", cltest.APIEmail(42), "mostcommonwrongpwdever"},
 		{"bad both", "notreal", "mostcommonwrongpwdever"},
-		{"correct", cltest.APIEmail, cltest.Password},
+		{"correct", cltest.APIEmail(42), cltest.Password},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -54,9 +54,9 @@ func TestTerminalCookieAuthenticator_AuthenticateWithSession(t *testing.T) {
 		wantError        bool
 	}{
 		{"bad email", "notreal", cltest.Password, true},
-		{"bad pwd", cltest.APIEmail, "mostcommonwrongpwdever", true},
+		{"bad pwd", cltest.APIEmail(app.Config.AdvisoryLockID), "mostcommonwrongpwdever", true},
 		{"bad both", "notreal", "mostcommonwrongpwdever", true},
-		{"success", cltest.APIEmail, cltest.Password, false},
+		{"success", cltest.APIEmail(app.Config.AdvisoryLockID), cltest.Password, false},
 	}
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
@@ -160,7 +160,7 @@ func TestTerminalAPIInitializer_InitializeWithExistingAPIUser(t *testing.T) {
 	store, cleanup := cltest.NewStore(t)
 	defer cleanup()
 
-	initialUser := cltest.MustUser(cltest.APIEmail, cltest.Password)
+	initialUser := cltest.MustRandomUser()
 	require.NoError(t, store.SaveUser(&initialUser))
 
 	mock := &cltest.MockCountingPrompter{}
@@ -195,7 +195,7 @@ func TestFileAPIInitializer_InitializeWithoutAPIUser(t *testing.T) {
 				assert.Error(t, err)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, cltest.APIEmail, user.Email)
+				assert.Equal(t, "email@test.net", user.Email)
 				persistedUser, err := store.FindUser()
 				assert.NoError(t, err)
 				assert.Equal(t, persistedUser.Email, user.Email)
@@ -210,7 +210,7 @@ func TestFileAPIInitializer_InitializeWithExistingAPIUser(t *testing.T) {
 	store, cleanup := cltest.NewStore(t)
 	defer cleanup()
 
-	initialUser := cltest.MustUser(cltest.APIEmail, cltest.Password)
+	initialUser := cltest.MustRandomUser()
 	require.NoError(t, store.SaveUser(&initialUser))
 
 	tests := []struct {

@@ -19,7 +19,7 @@ import (
 func TestConfigController_Show(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
+	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
 	defer cleanup()
 	require.NoError(t, app.Start())
 	client := app.NewHTTPClient()
@@ -31,7 +31,7 @@ func TestConfigController_Show(t *testing.T) {
 	cwl := presenters.ConfigWhitelist{}
 	require.NoError(t, cltest.ParseJSONAPIResponse(t, resp, &cwl))
 
-	assert.Equal(t, orm.LogLevel{Level: -1}, cwl.LogLevel)
+	assert.Equal(t, orm.LogLevel{Level: 0}, cwl.LogLevel)
 	assert.Contains(t, cwl.RootDir, "/tmp/chainlink_test/")
 	assert.Equal(t, uint16(6688), cwl.Port)
 	assert.Equal(t, uint16(6689), cwl.TLSPort)

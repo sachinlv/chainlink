@@ -1,24 +1,29 @@
 package cmd
 
 import (
+	"database/sql"
 	"fmt"
 	"io"
 	"io/ioutil"
 	"math/big"
+	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 
 	"github.com/pkg/errors"
 
+	"github.com/smartcontractkit/chainlink/core/gracefulpanic"
 	"github.com/smartcontractkit/chainlink/core/logger"
 	"github.com/smartcontractkit/chainlink/core/services/chainlink"
 	strpkg "github.com/smartcontractkit/chainlink/core/store"
+	"github.com/smartcontractkit/chainlink/core/store/migrations"
 	"github.com/smartcontractkit/chainlink/core/store/models"
 	"github.com/smartcontractkit/chainlink/core/store/orm"
 	"github.com/smartcontractkit/chainlink/core/store/presenters"
 	"github.com/smartcontractkit/chainlink/core/utils"
 
+	"github.com/jinzhu/gorm"
 	clipkg "github.com/urfave/cli"
 	"go.uber.org/zap/zapcore"
 )
@@ -287,6 +292,71 @@ func (cli *Client) RebroadcastTransactions(c *clipkg.Context) error {
 		}
 	}
 	return nil
+}
+
+// ResetDatabase drops, creates and migrates the database specified by DATABASE_URL
+// This is useful to setup the database for testing
+func (cli *Client) ResetDatabase(c *clipkg.Context) error {
+	logger.SetLogger(cli.Config.CreateProductionLogger())
+	config := orm.NewConfig()
+	if config.DatabaseURL() == "" {
+		return cli.errorOut(errors.New("You must set DATABASE_URL env variable. HINT: If you are running this to set up your local test database, try DATABASE_URL=postgresql://postgres@localhost:5432/chainlink_test?sslmode=disable"))
+	}
+	logger.Infof("Resetting database: %#v", config.DatabaseURL())
+	err := dropAndCreateTestDB(config)
+	if err != nil {
+		return cli.errorOut(err)
+	}
+	err = migrateTestDB(config)
+	if err != nil {
+		return cli.errorOut(err)
+	}
+
+	return nil
+}
+
+func dropAndCreateTestDB(config *orm.Config) error {
+	parsed, err := url.Parse(config.DatabaseURL())
+	if err != nil {
+		return err
+	}
+
+	dbname := parsed.Path[1:]
+	// Cannot drop test database if we are connected to it, so we must connect
+	// to a different one. template1 should be present on all postgres installations
+	parsed.Path = "/template1"
+	db, err := sql.Open(string(orm.DialectPostgres), parsed.String())
+	if err != nil {
+		return fmt.Errorf("unable to open postgres database for creating test db: %+v", err)
+	}
+	defer db.Close()
+
+	_, err = db.Exec(fmt.Sprintf("DROP DATABASE IF EXISTS %s", dbname))
+	if err != nil {
+		return fmt.Errorf("unable to drop postgres test database: %v", err)
+	}
+	// `CREATE DATABASE $1` does not seem to work w CREATE DATABASE
+	_, err = db.Exec(fmt.Sprintf("CREATE DATABASE %s", dbname))
+	if err != nil {
+		return fmt.Errorf("unable to create postgres test database: %v", err)
+	}
+	return nil
+}
+
+func migrateTestDB(config *orm.Config) error {
+	orm, err := orm.NewORM(config.DatabaseURL(), config.DatabaseTimeout(), gracefulpanic.NewSignal(), config.Dialect, config.AdvisoryLockID)
+	if err != nil {
+		return fmt.Errorf("failed to initialize orm: %v", err)
+	}
+	orm.SetLogging(config.LogSQLStatements() || config.LogSQLMigrations())
+	err = orm.RawDB(func(db *gorm.DB) error {
+		return migrations.GORMMigrate(db)
+	})
+	if err != nil {
+		return fmt.Errorf("migrateTestDB failed: %v", err)
+	}
+	orm.SetLogging(config.LogSQLStatements())
+	return orm.Close()
 }
 
 // DeleteUser is run locally to remove the User row from the node's database.

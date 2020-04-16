@@ -31,8 +31,9 @@ func bootstrapORM(t *testing.T) (*orm.ORM, func()) {
 	config := tc.Config
 
 	require.NoError(t, os.MkdirAll(config.RootDir(), 0700))
-	cleanupDB := cltest.PrepareTestDB(tc)
-	orm, err := orm.NewORM(config.DatabaseURL(), config.DatabaseTimeout(), gracefulpanic.NewSignal())
+	migrationTestDBURL, err := cltest.DropAndCreateThrowawayTestDB(tc.DatabaseURL(), "migrations")
+	require.NoError(t, err)
+	orm, err := orm.NewORM(migrationTestDBURL, config.DatabaseTimeout(), gracefulpanic.NewSignal(), orm.DialectPostgres, config.AdvisoryLockID)
 	require.NoError(t, err)
 	orm.SetLogging(true)
 
@@ -40,7 +41,6 @@ func bootstrapORM(t *testing.T) (*orm.ORM, func()) {
 		assert.NoError(t, orm.Close())
 		cleanup()
 		os.RemoveAll(config.RootDir())
-		cleanupDB()
 	}
 }
 

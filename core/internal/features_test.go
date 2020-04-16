@@ -63,7 +63,9 @@ func TestIntegration_HttpRequestWithHeaders(t *testing.T) {
 		})
 	defer assertCalled()
 
-	app, cleanup := cltest.NewApplicationWithKey(t)
+	// Must use hardcoded key here since the hash has to match attempt1Hash
+	key3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea := `{"address":"3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea","crypto":{"cipher":"aes-128-ctr","ciphertext":"7515678239ccbeeaaaf0b103f0fba46a979bf6b2a52260015f35b9eb5fed5c17","cipherparams":{"iv":"87e5a5db334305e1e4fb8b3538ceea12"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"d89ac837b5dcdce5690af764762fe349d8162bb0086cea2bc3a4289c47853f96"},"mac":"57a7f4ada10d3d89644f541c91f89b5bde73e15e827ee40565e2d1f88bb0ac96"},"id":"c8cb9bc7-0a51-43bd-8348-8a67fd1ec52c","version":3}`
+	app, cleanup := cltest.NewApplicationWithFixtureKey(t, key3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea)
 	defer cleanup()
 	config := app.Config
 	eth := app.EthMock
@@ -118,7 +120,9 @@ func TestIntegration_FeeBump(t *testing.T) {
 	mockServer, assertCalled := cltest.NewHTTPMockServer(t, http.StatusOK, "GET", tickerResponse)
 	defer assertCalled()
 
-	app, cleanup := cltest.NewApplicationWithKey(t)
+	// Must use hardcoded key here since the hash has to match attempt1Hash
+	key3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea := `{"address":"3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea","crypto":{"cipher":"aes-128-ctr","ciphertext":"7515678239ccbeeaaaf0b103f0fba46a979bf6b2a52260015f35b9eb5fed5c17","cipherparams":{"iv":"87e5a5db334305e1e4fb8b3538ceea12"},"kdf":"scrypt","kdfparams":{"dklen":32,"n":262144,"p":1,"r":8,"salt":"d89ac837b5dcdce5690af764762fe349d8162bb0086cea2bc3a4289c47853f96"},"mac":"57a7f4ada10d3d89644f541c91f89b5bde73e15e827ee40565e2d1f88bb0ac96"},"id":"c8cb9bc7-0a51-43bd-8348-8a67fd1ec52c","version":3}`
+	app, cleanup := cltest.NewApplicationWithFixtureKey(t, key3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea)
 	defer cleanup()
 	config := app.Config
 
@@ -614,7 +618,7 @@ func TestIntegration_MultiplierUint256(t *testing.T) {
 func TestIntegration_NonceManagement_firstRunWithExistingTxs(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithKey(t, cltest.EthMockRegisterChainID)
+	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.EthMockRegisterChainID)
 	defer cleanup()
 
 	eth := app.EthMock
@@ -658,7 +662,7 @@ func TestIntegration_NonceManagement_firstRunWithExistingTxs(t *testing.T) {
 func TestIntegration_CreateServiceAgreement(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithKey(t)
+	app, cleanup := cltest.NewApplicationWithRandomKey(t)
 	defer cleanup()
 
 	eth := app.EthMock
@@ -863,7 +867,7 @@ func TestIntegration_AuthToken(t *testing.T) {
 }
 
 func TestIntegration_FluxMonitor_Deviation(t *testing.T) {
-	app, cleanup := cltest.NewApplicationWithKey(t)
+	app, cleanup := cltest.NewApplicationWithRandomKey(t)
 	defer cleanup()
 	minPayment := app.Store.Config.MinimumContractPayment().ToInt().Uint64()
 	availableFunds := minPayment * 100
@@ -941,7 +945,7 @@ func TestIntegration_FluxMonitor_Deviation(t *testing.T) {
 }
 
 func TestIntegration_FluxMonitor_NewRound(t *testing.T) {
-	app, cleanup := cltest.NewApplicationWithKey(t)
+	app, cleanup := cltest.NewApplicationWithRandomKey(t)
 	defer cleanup()
 	minPayment := app.Store.Config.MinimumContractPayment().ToInt().Uint64()
 	availableFunds := minPayment * 100
@@ -1013,7 +1017,7 @@ func TestIntegration_FluxMonitor_NewRound(t *testing.T) {
 }
 
 func TestIntegration_RandomnessRequest(t *testing.T) {
-	app, cleanup := cltest.NewApplicationWithKey(t, cltest.NoRegisterGetBlockNumber)
+	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.NoRegisterGetBlockNumber)
 	defer cleanup()
 	eth := app.MockCallerSubscriberClient()
 	logs := make(chan ethpkg.Log, 1)

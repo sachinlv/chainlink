@@ -21,14 +21,14 @@ var endAtISO8601 = endAt.Format(time.RFC3339)
 func TestServiceAgreementsController_Create(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
+	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
 	defer cleanup()
 	app.EthMock.RegisterSubscription("logs")
 
 	require.NoError(t, app.Start())
 
 	client := app.NewHTTPClient()
-	base := string(cltest.MustReadFile(t, "testdata/hello_world_agreement.json"))
+	base := cltest.MustHelloWorldAgreement(t, app.Account.Address)
 	base = strings.Replace(base, "2019-10-19T22:17:19Z", endAtISO8601, 1)
 	tests := []struct {
 		name     string
@@ -73,7 +73,7 @@ func TestServiceAgreementsController_Create(t *testing.T) {
 func TestServiceAgreementsController_Create_isIdempotent(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
+	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
 	defer cleanup()
 	app.EthMock.RegisterSubscription("logs")
 
@@ -81,7 +81,7 @@ func TestServiceAgreementsController_Create_isIdempotent(t *testing.T) {
 
 	client := app.NewHTTPClient()
 
-	base := string(cltest.MustReadFile(t, "testdata/hello_world_agreement.json"))
+	base := cltest.MustHelloWorldAgreement(t, app.Account.Address)
 	base = strings.Replace(base, "2019-10-19T22:17:19Z", endAtISO8601, 1)
 	reader := bytes.NewBuffer([]byte(base))
 

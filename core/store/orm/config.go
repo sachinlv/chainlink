@@ -41,6 +41,10 @@ type Config struct {
 	viper           *viper.Viper
 	SecretGenerator SecretGenerator
 	runtimeStore    *ORM
+	// TODO: Need to set these options somewhere for production
+	Dialect                  DialectName
+	AdvisoryLockID           int64
+	LogBroadcasterCursorName string
 }
 
 var configFileNotFoundError = reflect.TypeOf(viper.ConfigFileNotFoundError{})
@@ -151,6 +155,12 @@ func (c Config) DatabaseTimeout() models.Duration {
 // a properly formatted URL, with a valid scheme (postgres://)
 func (c Config) DatabaseURL() string {
 	return c.viper.GetString(EnvVarName("DatabaseURL"))
+}
+
+// MigrateDatabase automatically migrates the database on application startup
+// if set to true
+func (c Config) MigrateDatabase() bool {
+	return c.viper.GetBool(EnvVarName("MigrateDatabase"))
 }
 
 // DefaultMaxHTTPAttempts defines the limit for HTTP requests.

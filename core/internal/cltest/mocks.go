@@ -703,10 +703,24 @@ func (ns NeverSleeper) After() time.Duration { return 0 * time.Microsecond }
 // Duration returns a duration
 func (ns NeverSleeper) Duration() time.Duration { return 0 * time.Microsecond }
 
-func MustUser(email, pwd string) models.User {
-	r, err := models.NewUser(email, pwd)
+// TODO: XXUser funcs need better names
+func MustRandomUser() models.User {
+	return MustUser(NewRandomInt64())
+}
+
+func MustUser(id int64) models.User {
+	email := APIEmail(id)
+	r, err := models.NewUser(email, Password)
 	if err != nil {
 		logger.Panic(err)
+	}
+	return r
+}
+
+func MustNewUser(t *testing.T, email, password string) models.User {
+	r, err := models.NewUser(email, password)
+	if err != nil {
+		t.Fatal(err)
 	}
 	return r
 }
@@ -720,7 +734,7 @@ func (m *MockAPIInitializer) Initialize(store *store.Store) (models.User, error)
 		return user, err
 	}
 	m.Count += 1
-	user := MustUser(APIEmail, Password)
+	user := MustUser(store.Config.AdvisoryLockID)
 	return user, store.SaveUser(&user)
 }
 
@@ -750,7 +764,7 @@ func (m *MockSessionRequestBuilder) Build(string) (models.SessionRequest, error)
 	if m.Error != nil {
 		return models.SessionRequest{}, m.Error
 	}
-	return models.SessionRequest{Email: APIEmail, Password: Password}, nil
+	return models.SessionRequest{Email: "TODO: FIX ME!!", Password: Password}, nil
 }
 
 type mockSecretGenerator struct{}

@@ -4,6 +4,7 @@ import (
 	"math/big"
 	"sync"
 	"testing"
+	// "time"
 
 	ethpkg "github.com/smartcontractkit/chainlink/core/eth"
 	"github.com/smartcontractkit/chainlink/core/internal/cltest"
@@ -131,6 +132,8 @@ func TestJobSubscriber_RemoveJob_NotFoundError(t *testing.T) {
 }
 
 func TestJobSubscriber_Connect_Disconnect(t *testing.T) {
+	// FIXME: This test fails sporadically when run in parallel
+	// I do not know why
 	t.Parallel()
 
 	store, cleanup := cltest.NewStore(t)
@@ -138,7 +141,6 @@ func TestJobSubscriber_Connect_Disconnect(t *testing.T) {
 
 	runManager := new(mocks.RunManager)
 	jobSubscriber := services.NewJobSubscriber(store, runManager)
-	defer jobSubscriber.Stop()
 
 	eth := cltest.MockEthOnStore(t, store, cltest.NoRegisterGetBlockNumber)
 	eth.Register("eth_getLogs", []ethpkg.Log{})
@@ -146,12 +148,15 @@ func TestJobSubscriber_Connect_Disconnect(t *testing.T) {
 
 	jobSpec1 := cltest.NewJobWithLogInitiator()
 	jobSpec2 := cltest.NewJobWithLogInitiator()
-	assert.Nil(t, store.CreateJob(&jobSpec1))
-	assert.Nil(t, store.CreateJob(&jobSpec2))
+	require.Nil(t, store.CreateJob(&jobSpec1))
+	require.Nil(t, store.CreateJob(&jobSpec2))
 	eth.RegisterSubscription("logs")
 	eth.RegisterSubscription("logs")
 
-	assert.Nil(t, jobSubscriber.Connect(cltest.Head(491)))
+	require.Nil(t, jobSubscriber.Connect(cltest.Head(491)))
+
+	jobSubscriber.Stop()
+
 	eth.EventuallyAllCalled(t)
 
 	assert.Len(t, jobSubscriber.Jobs(), 2)

@@ -312,7 +312,7 @@ func NewApp(client *Client) *cli.App {
 				},
 				{
 					Name:   "rebroadcast-transactions",
-					Usage:  "manually rebroadcast txs matching nonce range with the specified gas price. This is useful in emergencies e.g. high gas prices and/or network congestion to forcibly clear out the pending TX queue",
+					Usage:  "Manually rebroadcast txs matching nonce range with the specified gas price. This is useful in emergencies e.g. high gas prices and/or network congestion to forcibly clear out the pending TX queue",
 					Action: client.RebroadcastTransactions,
 					Flags: []cli.Flag{
 						cli.Uint64Flag{
@@ -336,6 +336,13 @@ func NewApp(client *Client) *cli.App {
 							Usage: "OPTIONAL: gas limit to use for each transaction ",
 						},
 					},
+				},
+				{
+					Name:   "resetdb",
+					Usage:  "Drop, create and migrate database. Useful for setting up the database in order to run tests or resetting the dev database. WARNING: This will ERASE ALL DATA for the specified DATABASE_URL.",
+					Hidden: !client.Config.Dev(),
+					Action: client.ResetDatabase,
+					Flags:  []cli.Flag{},
 				},
 			},
 		},

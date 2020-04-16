@@ -162,7 +162,7 @@ func (fm *concreteFluxMonitor) serveInternalRequests() {
 		case jobID := <-fm.chRemove:
 			checkers, ok := jobMap[jobID]
 			if !ok {
-				logger.Errorf("job '%s' is missing from the flux monitor", jobID)
+				logger.Errorf("job '%s' is missing from the flux monitor", jobID.String())
 				return
 			}
 			for _, checker := range checkers {

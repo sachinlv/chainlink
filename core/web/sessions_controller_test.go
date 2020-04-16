@@ -20,7 +20,7 @@ import (
 func TestSessionsController_Create(t *testing.T) {
 	t.Parallel()
 
-	user := cltest.MustUser("email@test.net", "password123")
+	user := cltest.MustUser(cltest.NewRandomInt64())
 	app, cleanup := cltest.NewApplication(t, cltest.LenientEthMock)
 	app.Start()
 	err := app.Store.SaveUser(&user)
@@ -35,9 +35,9 @@ func TestSessionsController_Create(t *testing.T) {
 		password    string
 		wantSession bool
 	}{
-		{"incorrect pwd", "email@test.net", "incorrect", false},
-		{"incorrect email", "incorrect@test.net", "password123", false},
-		{"correct", "email@test.net", "password123", true},
+		{"incorrect pwd", user.Email, "incorrect", false},
+		{"incorrect email", "incorrect@test.net", cltest.Password, false},
+		{"correct", user.Email, cltest.Password, true},
 	}
 
 	for _, test := range tests {
@@ -78,7 +78,7 @@ func TestSessionsController_Create(t *testing.T) {
 func TestSessionsController_Create_ReapSessions(t *testing.T) {
 	t.Parallel()
 
-	user := cltest.MustUser("email@test.net", "password123")
+	user := cltest.MustUser(cltest.NewRandomInt64())
 	app, cleanup := cltest.NewApplication(t, cltest.LenientEthMock)
 	app.Start()
 	err := app.Store.SaveUser(&user)
@@ -89,7 +89,7 @@ func TestSessionsController_Create_ReapSessions(t *testing.T) {
 	staleSession.LastUsed = time.Now().Add(-cltest.MustParseDuration(t, "241h"))
 	require.NoError(t, app.Store.SaveSession(&staleSession))
 
-	body := fmt.Sprintf(`{"email":"%s","password":"%s"}`, "email@test.net", "password123")
+	body := fmt.Sprintf(`{"email":"%s","password":"%s"}`, user.Email, cltest.Password)
 	resp, err := http.Post(app.Config.ClientNodeURL()+"/sessions", "application/json", bytes.NewBufferString(body))
 	assert.NoError(t, err)
 	defer resp.Body.Close()
@@ -105,7 +105,7 @@ func TestSessionsController_Create_ReapSessions(t *testing.T) {
 func TestSessionsController_Destroy(t *testing.T) {
 	t.Parallel()
 
-	seedUser := cltest.MustUser("email@test.net", "password123")
+	seedUser := cltest.MustUser(cltest.NewRandomInt64())
 	app, cleanup := cltest.NewApplication(t, cltest.LenientEthMock)
 	app.Start()
 	err := app.Store.SaveUser(&seedUser)
@@ -150,7 +150,7 @@ func TestSessionsController_Destroy_ReapSessions(t *testing.T) {
 	t.Parallel()
 
 	client := http.Client{}
-	user := cltest.MustUser("email@test.net", "password123")
+	user := cltest.MustUser(cltest.NewRandomInt64())
 	app, cleanup := cltest.NewApplication(t, cltest.LenientEthMock)
 	defer cleanup()
 
