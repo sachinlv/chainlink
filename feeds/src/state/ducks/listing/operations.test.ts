@@ -1,5 +1,5 @@
 import { partialAsFull } from '@chainlink/ts-helpers'
-import { getFeedsConfig } from 'config'
+import * as config from 'config'
 import { Contract } from 'ethers'
 import configureStore from 'redux-mock-store'
 import thunk from 'redux-thunk'
@@ -24,9 +24,56 @@ const createContractSpy = jest
     return contract
   })
 
-const mainnetContracts = getFeedsConfig().filter(
-  config => config.networkId === Networks.MAINNET,
-)
+jest.spyOn(config, 'getFeedsConfig').mockImplementation(() => {
+  return [
+    {
+      contractAddress: '0xF79D6aFBb6dA890132F9D7c355e3015f15F3406F',
+      contractType: 'aggregator',
+      contractVersion: 2,
+      name: 'ETH / USD',
+      valuePrefix: '$',
+      pair: ['ETH', 'USD'],
+      heartbeat: 7200,
+      path: 'eth-usd',
+      networkId: 1,
+      history: false,
+      decimalPlaces: 3,
+      multiply: '100000000',
+      sponsored: ['Synthetix', 'Loopring', 'OpenLaw', '1inch'],
+      threshold: 1,
+      compareOffchain:
+        'https://www.tradingview.com/symbols/ETHUSD/?exchange=COINBASE',
+      healthPrice:
+        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=ethereum',
+      listing: true,
+    },
+    {
+      contractAddress: '0x79fEbF6B9F76853EDBcBc913e6aAE8232cFB9De9',
+      contractType: 'aggregator',
+      contractVersion: 1,
+      name: 'ETH / USD',
+      valuePrefix: '$',
+      pair: ['ETH', 'USD'],
+      heartbeat: 7200,
+      path: 'eth-usd-depreciated',
+      networkId: 1,
+      history: true,
+      decimalPlaces: 3,
+      multiply: '100000000',
+      sponsored: ['Synthetix', 'Loopring', 'OpenLaw', '1inch'],
+      threshold: 1,
+      compareOffchain:
+        'https://www.tradingview.com/symbols/ETHUSD/?exchange=COINBASE',
+      healthPrice:
+        'https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=ethereum',
+      listing: true,
+    },
+  ]
+})
+
+const mainnetContracts = config
+  .getFeedsConfig()
+  .filter((config: any) => config.networkId === Networks.MAINNET)
 
 const middlewares = [thunk]
 const mockStore = configureStore(middlewares)
