@@ -1,6 +1,6 @@
 import { ethers } from 'ethers'
 import { FunctionFragment } from 'ethers/utils'
-import { JsonRpcProvider, Log } from 'ethers/providers'
+import { JsonRpcProvider, Log, Filter } from 'ethers/providers'
 import { networkName, Networks } from '../utils'
 
 /**
@@ -54,11 +54,6 @@ export function formatAnswer(
   const divided = value.mul(decimals).div(multiply)
   const formatted = ethers.utils.formatUnits(divided, decimalPlaces)
   return formatted.toString()
-}
-
-interface Filter {
-  fromBlock: any
-  toBlock: any
 }
 
 interface ChainlinkEvent {
