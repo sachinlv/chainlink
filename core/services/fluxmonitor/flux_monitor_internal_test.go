@@ -6,7 +6,7 @@ import (
 	"github.com/smartcontractkit/chainlink/core/utils"
 )
 
-func (fm *concreteFluxMonitor) MockLogBroadcaster() *mockLogBroadcaster {
+func (fm *ConcreteFluxMonitor) MockLogBroadcaster() *mockLogBroadcaster {
 	mock := mockLogBroadcaster{}
 	fm.logBroadcaster = &mock
 	return &mock

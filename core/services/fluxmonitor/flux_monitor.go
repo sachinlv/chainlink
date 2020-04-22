@@ -73,7 +73,7 @@ func New(
 	runManager RunManager,
 ) Service {
 	if store.Config.EthereumDisabled() {
-		return &concreteFluxMonitor{disabled: true}
+		return &ConcreteFluxMonitor{disabled: true}
 	}
 
 	logBroadcaster := eth.NewLogBroadcaster(store.TxManager, store.ORM, 10)
@@ -94,7 +94,7 @@ func New(
 	}
 }
 
-func (fm *concreteFluxMonitor) Start() error {
+func (fm *ConcreteFluxMonitor) Start() error {
 	if fm.disabled {
 		logger.Info("Flux monitor disabled: skipping start")
 		return nil
@@ -130,7 +130,7 @@ func (fm *concreteFluxMonitor) Start() error {
 }
 
 // Disconnect cleans up running deviation checkers.
-func (fm *concreteFluxMonitor) Stop() {
+func (fm *ConcreteFluxMonitor) Stop() {
 	if fm.disabled {
 		logger.Info("Flux monitor disabled: cannot stop")
 		return
