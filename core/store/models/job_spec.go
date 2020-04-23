@@ -217,12 +217,16 @@ type InitiatorParams struct {
 	ToBlock    *utils.Big        `json:"toBlock,omitempty" gorm:"type:varchar(255)"`
 	Topics     Topics            `json:"topics,omitempty"`
 
-	RequestData     JSON     `json:"requestData,omitempty" gorm:"type:text"`
-	IdleThreshold   Duration `json:"idleThreshold,omitempty"`
-	Feeds           Feeds    `json:"feeds,omitempty" gorm:"type:text"`
-	Threshold       float32  `json:"threshold,omitempty" gorm:"type:float"`
-	Precision       int32    `json:"precision,omitempty" gorm:"type:smallint"`
-	PollingInterval Duration `json:"pollingInterval,omitempty"`
+	RequestData   JSON     `json:"requestData,omitempty" gorm:"type:text"`
+	IdleThreshold Duration `json:"idleThreshold,omitempty"`
+	Feeds         Feeds    `json:"feeds,omitempty" gorm:"type:text"`
+	Threshold     float32  `json:"threshold,omitempty" gorm:"type:float"`
+	// AbsoluteThreshold is the maximum absolute change allowed in a fluxmonitored
+	// value before a new round should be kicked off, so that the current value
+	// can be reported on-chain.
+	AbsoluteThreshold float32  `json:"absoluteThreshold" gorm:"type:float;not null"`
+	Precision         int32    `json:"precision,omitempty" gorm:"type:smallint"`
+	PollingInterval   Duration `json:"pollingInterval,omitempty"`
 }
 
 // FluxMonitorDefaultInitiatorParams are the default parameters for Flux

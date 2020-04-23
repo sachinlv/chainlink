@@ -139,56 +139,42 @@ func TestConcreteFluxMonitor_AddJobRemoveJob(t *testing.T) {
 }
 
 func TestPollingDeviationChecker_PollIfEligible(t *testing.T) {
+	t.Parallel()
 	tests := []struct {
-		name             string
-		eligible         bool
-		connected        bool
-		funded           bool
-		threshold        float64
-		latestAnswer     int64
-		polledAnswer     int64
-		expectedToPoll   bool
-		expectedToSubmit bool
+		name              string
+		eligible          bool
+		connected         bool
+		funded            bool
+		threshold         float64
+		absoluteThreshold float64
+		latestAnswer      int64
+		polledAnswer      int64
+		expectedToPoll    bool
+		expectedToSubmit  bool
 	}{
-		{"eligible, connected, funded, threshold > 0, answers deviate", true, true, true, 0.1, 1, 100, true, true},
-		{"eligible, connected, funded, threshold > 0, answers do not deviate", true, true, true, 0.1, 100, 100, true, false},
-		{"eligible, connected, funded, threshold == 0, answers deviate", true, true, true, 0, 1, 100, true, true},
-		{"eligible, connected, funded, threshold == 0, answers do not deviate", true, true, true, 0, 1, 100, true, true},
+		{"eligible, connected, funded, threshold > 0, answers deviate", true, true, true, 0.1, 200, 1, 100, true, true},
+		{"eligible, connected, funded, threshold > 0, answers do not deviate", true, true, true, 0.1, 200, 100, 100, true, false},
 
-		{"eligible, disconnected, funded, threshold > 0, answers deviate", true, false, true, 0.1, 1, 100, false, false},
-		{"eligible, disconnected, funded, threshold > 0, answers do not deviate", true, false, true, 0.1, 100, 100, false, false},
-		{"eligible, disconnected, funded, threshold == 0, answers deviate", true, false, true, 0, 1, 100, false, false},
-		{"eligible, disconnected, funded, threshold == 0, answers do not deviate", true, false, true, 0, 1, 100, false, false},
+		{"eligible, disconnected, funded, threshold > 0, answers deviate", true, false, true, 0.1, 200, 1, 100, false, false},
+		{"eligible, disconnected, funded, threshold > 0, answers do not deviate", true, false, true, 0.1, 200, 100, 100, false, false},
 
-		{"ineligible, connected, funded, threshold > 0, answers deviate", false, true, true, 0.1, 1, 100, false, false},
-		{"ineligible, connected, funded, threshold > 0, answers do not deviate", false, true, true, 0.1, 100, 100, false, false},
-		{"ineligible, connected, funded, threshold == 0, answers deviate", false, true, true, 0, 1, 100, false, false},
-		{"ineligible, connected, funded, threshold == 0, answers do not deviate", false, true, true, 0, 1, 100, false, false},
+		{"ineligible, connected, funded, threshold > 0, answers deviate", false, true, true, 0.1, 200, 1, 100, false, false},
+		{"ineligible, connected, funded, threshold > 0, answers do not deviate", false, true, true, 0.1, 200, 100, 100, false, false},
 
-		{"ineligible, disconnected, funded, threshold > 0, answers deviate", false, false, true, 0.1, 1, 100, false, false},
-		{"ineligible, disconnected, funded, threshold > 0, answers do not deviate", false, false, true, 0.1, 100, 100, false, false},
-		{"ineligible, disconnected, funded, threshold == 0, answers deviate", false, false, true, 0, 1, 100, false, false},
-		{"ineligible, disconnected, funded, threshold == 0, answers do not deviate", false, false, true, 0, 1, 100, false, false},
+		{"ineligible, disconnected, funded, threshold > 0, answers deviate", false, false, true, 0.1, 200, 1, 100, false, false},
+		{"ineligible, disconnected, funded, threshold > 0, answers do not deviate", false, false, true, 0.1, 200, 100, 100, false, false},
 
-		{"eligible, connected, underfunded, threshold > 0, answers deviate", true, true, false, 0.1, 1, 100, false, false},
-		{"eligible, connected, underfunded, threshold > 0, answers do not deviate", true, true, false, 0.1, 100, 100, false, false},
-		{"eligible, connected, underfunded, threshold == 0, answers deviate", true, true, false, 0, 1, 100, false, false},
-		{"eligible, connected, underfunded, threshold == 0, answers do not deviate", true, true, false, 0, 1, 100, false, false},
+		{"eligible, connected, underfunded, threshold > 0, answers deviate", true, true, false, 0.1, 200, 1, 100, false, false},
+		{"eligible, connected, underfunded, threshold > 0, answers do not deviate", true, true, false, 0.1, 200, 100, 100, false, false},
 
-		{"eligible, disconnected, underfunded, threshold > 0, answers deviate", true, false, false, 0.1, 1, 100, false, false},
-		{"eligible, disconnected, underfunded, threshold > 0, answers do not deviate", true, false, false, 0.1, 100, 100, false, false},
-		{"eligible, disconnected, underfunded, threshold == 0, answers deviate", true, false, false, 0, 1, 100, false, false},
-		{"eligible, disconnected, underfunded, threshold == 0, answers do not deviate", true, false, false, 0, 1, 100, false, false},
+		{"eligible, disconnected, underfunded, threshold > 0, answers deviate", true, false, false, 0.1, 1, 200, 100, false, false},
+		{"eligible, disconnected, underfunded, threshold > 0, answers do not deviate", true, false, false, 0.1, 200, 100, 100, false, false},
 
-		{"ineligible, connected, underfunded, threshold > 0, answers deviate", false, true, false, 0.1, 1, 100, false, false},
-		{"ineligible, connected, underfunded, threshold > 0, answers do not deviate", false, true, false, 0.1, 100, 100, false, false},
-		{"ineligible, connected, underfunded, threshold == 0, answers deviate", false, true, false, 0, 1, 100, false, false},
-		{"ineligible, connected, underfunded, threshold == 0, answers do not deviate", false, true, false, 0, 1, 100, false, false},
+		{"ineligible, connected, underfunded, threshold > 0, answers deviate", false, true, false, 0.1, 200, 1, 100, false, false},
+		{"ineligible, connected, underfunded, threshold > 0, answers do not deviate", false, true, false, 0.1, 200, 100, 100, false, false},
 
-		{"ineligible, disconnected, underfunded, threshold > 0, answers deviate", false, false, false, 0.1, 1, 100, false, false},
-		{"ineligible, disconnected, underfunded, threshold > 0, answers do not deviate", false, false, false, 0.1, 100, 100, false, false},
-		{"ineligible, disconnected, underfunded, threshold == 0, answers deviate", false, false, false, 0, 1, 100, false, false},
-		{"ineligible, disconnected, underfunded, threshold == 0, answers do not deviate", false, false, false, 0, 1, 100, false, false},
+		{"ineligible, disconnected, underfunded, threshold > 0, answers deviate", false, false, false, 0.1, 200, 1, 100, false, false},
+		{"ineligible, disconnected, underfunded, threshold > 0, answers do not deviate", false, false, false, 0.1, 200, 100, 100, false, false},
 	}
 
 	store, cleanup := cltest.NewStore(t)
@@ -197,72 +183,78 @@ func TestPollingDeviationChecker_PollIfEligible(t *testing.T) {
 	nodeAddr := ensureAccount(t, store)
 
 	for _, test := range tests {
-		t.Run(test.name, func(t *testing.T) {
-			rm := new(mocks.RunManager)
-			fetcher := new(mocks.Fetcher)
-			fluxAggregator := new(mocks.FluxAggregator)
+		// Run one test for relative thresholds, one for absolute thresholds
+		for _, thresholds := range []struct{ abs, rel float64 }{{0.1, 200}, {1, 10}} {
+			tt := test // Copy test so that for loop can overwrite test during asynchronous operation (t.Parallel())
+			tt.threshold = thresholds.rel
+			tt.absoluteThreshold = thresholds.abs
+			t.Run(tt.name, func(t *testing.T) {
+				rm := new(mocks.RunManager)
+				fetcher := new(mocks.Fetcher)
+				fluxAggregator := new(mocks.FluxAggregator)
 
-			job := cltest.NewJobWithFluxMonitorInitiator()
-			initr := job.Initiators[0]
-			initr.ID = 1
+				job := cltest.NewJobWithFluxMonitorInitiator()
+				initr := job.Initiators[0]
+				initr.ID = 1
 
-			const reportableRoundID = 2
-			latestAnswerNoPrecision := test.latestAnswer * int64(math.Pow10(int(initr.InitiatorParams.Precision)))
+				const reportableRoundID = 2
+				latestAnswerNoPrecision := tt.latestAnswer * int64(math.Pow10(int(initr.InitiatorParams.Precision)))
 
-			var availableFunds *big.Int
-			var paymentAmount *big.Int
-			minPayment := store.Config.MinimumContractPayment().ToInt()
-			if test.funded {
-				availableFunds = minPayment
-				paymentAmount = minPayment
-			} else {
-				availableFunds = big.NewInt(1)
-				paymentAmount = minPayment
-			}
+				var availableFunds *big.Int
+				var paymentAmount *big.Int
+				minPayment := store.Config.MinimumContractPayment().ToInt()
+				if tt.funded {
+					availableFunds = minPayment
+					paymentAmount = minPayment
+				} else {
+					availableFunds = big.NewInt(1)
+					paymentAmount = minPayment
+				}
 
-			roundState := contracts.FluxAggregatorRoundState{
-				ReportableRoundID: reportableRoundID,
-				EligibleToSubmit:  test.eligible,
-				LatestAnswer:      big.NewInt(latestAnswerNoPrecision),
-				AvailableFunds:    availableFunds,
-				PaymentAmount:     paymentAmount,
-			}
-			fluxAggregator.On("RoundState", nodeAddr).Return(roundState, nil).Maybe()
+				roundState := contracts.FluxAggregatorRoundState{
+					ReportableRoundID: reportableRoundID,
+					EligibleToSubmit:  tt.eligible,
+					LatestAnswer:      big.NewInt(latestAnswerNoPrecision),
+					AvailableFunds:    availableFunds,
+					PaymentAmount:     paymentAmount,
+				}
+				fluxAggregator.On("RoundState", nodeAddr).Return(roundState, nil).Maybe()
 
-			if test.expectedToPoll {
-				fetcher.On("Fetch").Return(decimal.NewFromInt(test.polledAnswer), nil)
-			}
+				if tt.expectedToPoll {
+					fetcher.On("Fetch").Return(decimal.NewFromInt(tt.polledAnswer), nil)
+				}
 
-			if test.expectedToSubmit {
-				run := cltest.NewJobRun(job)
-				data, err := models.ParseJSON([]byte(fmt.Sprintf(`{
+				if tt.expectedToSubmit {
+					run := cltest.NewJobRun(job)
+					data, err := models.ParseJSON([]byte(fmt.Sprintf(`{
 					"result": "%d",
 					"address": "%s",
 					"functionSelector": "0x%x",
 					"dataPrefix": "0x000000000000000000000000000000000000000000000000000000000000000%d"
-				}`, test.polledAnswer, initr.InitiatorParams.Address.Hex(), updateAnswerSelector, reportableRoundID)))
+				}`, tt.polledAnswer, initr.InitiatorParams.Address.Hex(), updateAnswerSelector, reportableRoundID)))
+					require.NoError(t, err)
+
+					rm.On("Create", job.ID, &initr, mock.Anything, mock.MatchedBy(func(runRequest *models.RunRequest) bool {
+						return reflect.DeepEqual(runRequest.RequestParams.Result.Value(), data.Result.Value())
+					})).Return(&run, nil)
+
+					fluxAggregator.On("GetMethodID", "updateAnswer").Return(updateAnswerSelector, nil)
+				}
+
+				checker, err := fluxmonitor.NewPollingDeviationChecker(store, fluxAggregator, initr, rm, fetcher, time.Second)
 				require.NoError(t, err)
 
-				rm.On("Create", job.ID, &initr, mock.Anything, mock.MatchedBy(func(runRequest *models.RunRequest) bool {
-					return reflect.DeepEqual(runRequest.RequestParams.Result.Value(), data.Result.Value())
-				})).Return(&run, nil)
+				if tt.connected {
+					checker.OnConnect()
+				}
 
-				fluxAggregator.On("GetMethodID", "updateAnswer").Return(updateAnswerSelector, nil)
-			}
+				checker.ExportedPollIfEligible(tt.threshold, tt.absoluteThreshold)
 
-			checker, err := fluxmonitor.NewPollingDeviationChecker(store, fluxAggregator, initr, rm, fetcher, time.Second)
-			require.NoError(t, err)
-
-			if test.connected {
-				checker.OnConnect()
-			}
-
-			checker.ExportedPollIfEligible(test.threshold)
-
-			fluxAggregator.AssertExpectations(t)
-			fetcher.AssertExpectations(t)
-			rm.AssertExpectations(t)
-		})
+				fluxAggregator.AssertExpectations(t)
+				fetcher.AssertExpectations(t)
+				rm.AssertExpectations(t)
+			})
+		}
 	}
 }
 
@@ -757,35 +749,63 @@ func TestPollingDeviationChecker_RespondToNewRound(t *testing.T) {
 	}
 }
 
+type outsideDeviationRow struct {
+	name                string
+	curPrice, nextPrice decimal.Decimal
+	threshold           float64 // in percentage
+	absoluteThreshold   float64
+	expectation         bool
+}
+
+func (o outsideDeviationRow) String() string {
+	return fmt.Sprintf(
+		`{name: "%s", curPrice: %s, nextPrice: %s, threshold: %.2f, `+
+			"absoluteThreshold: %f, expectation: %v}", o.name, o.curPrice, o.nextPrice,
+		o.threshold, o.absoluteThreshold, o.expectation)
+}
+
 func TestOutsideDeviation(t *testing.T) {
-	tests := []struct {
-		name                string
-		curPrice, nextPrice decimal.Decimal
-		threshold           float64 // in percentage
-		expectation         bool
-	}{
-		{"0 current price, outside deviation", decimal.NewFromInt(0), decimal.NewFromInt(100), 2, true},
-		{"0 current price, inside deviation", decimal.NewFromInt(0), decimal.NewFromInt(1), 2, true},
-		{"0 current and next price", decimal.NewFromInt(0), decimal.NewFromInt(0), 2, false},
+	t.Parallel()
+	f, i := decimal.NewFromFloat, decimal.NewFromInt
+	tests := []outsideDeviationRow{
+		// Start with a huge absoluteThreshold, to test relative threshold behavior
+		{"0 current price, outside deviation", i(0), i(100), 2, 1e307, true},
+		{"0 current and next price", i(0), i(0), 2, 1e307, false},
 
-		{"inside deviation", decimal.NewFromInt(100), decimal.NewFromInt(101), 2, false},
-		{"equal to deviation", decimal.NewFromInt(100), decimal.NewFromInt(102), 2, true},
-		{"outside deviation", decimal.NewFromInt(100), decimal.NewFromInt(103), 2, true},
-		{"outside deviation zero", decimal.NewFromInt(100), decimal.NewFromInt(0), 2, true},
+		{"inside deviation", i(100), i(101), 2, 1e307, false},
+		{"equal to deviation", i(100), i(102), 2, 1e307, true},
+		{"outside deviation", i(100), i(103), 2, 1e307, true},
+		{"outside deviation zero", i(100), i(0), 2, 1e307, true},
 
-		{"inside deviation, crosses 0 backwards", decimal.NewFromFloat(0.1), decimal.NewFromFloat(-0.1), 201, false},
-		{"equal to deviation, crosses 0 backwards", decimal.NewFromFloat(0.1), decimal.NewFromFloat(-0.1), 200, true},
-		{"outside deviation, crosses 0 backwards", decimal.NewFromFloat(0.1), decimal.NewFromFloat(-0.1), 199, true},
+		{"inside deviation, crosses 0 backwards", f(0.1), f(-0.1), 201, 1e307, false},
+		{"equal to deviation, crosses 0 backwards", f(0.1), f(-0.1), 200, 1e307, true},
+		{"outside deviation, crosses 0 backwards", f(0.1), f(-0.1), 199, 1e307, true},
 
-		{"inside deviation, crosses 0 forwards", decimal.NewFromFloat(-0.1), decimal.NewFromFloat(0.1), 201, false},
-		{"equal to deviation, crosses 0 forwards", decimal.NewFromFloat(-0.1), decimal.NewFromFloat(0.1), 200, true},
-		{"outside deviation, crosses 0 forwards", decimal.NewFromFloat(-0.1), decimal.NewFromFloat(0.1), 199, true},
+		{"inside deviation, crosses 0 forwards", f(-0.1), f(0.1), 201, 1e307, false},
+		{"equal to deviation, crosses 0 forwards", f(-0.1), f(0.1), 200, 1e307, true},
+		{"outside deviation, crosses 0 forwards", f(-0.1), f(0.1), 199, 1e307, true},
 	}
 
 	for _, test := range tests {
 		t.Run(test.name, func(t *testing.T) {
-			actual := fluxmonitor.OutsideDeviation(test.curPrice, test.nextPrice, test.threshold)
-			assert.Equal(t, test.expectation, actual)
+			c := func(test outsideDeviationRow) {
+				actual := fluxmonitor.OutsideDeviation(test.curPrice, test.nextPrice,
+					test.threshold, test.absoluteThreshold)
+				assert.Equal(t, test.expectation, actual,
+					"check on OutsideDeviation failed for %s", test)
+			}
+			c(test) // Checks on relative threshold
+			// Check corresponding absolute threshold tests; make relative threshold
+			// (mostly) impossible to cross
+			test.threshold = 1e307
+			// Initial absoluteThreshold is never crossed, but with curPrice=0, any
+			// nonzero nextPrice will cross the relative threshold, yielding true
+			test.expectation = test.curPrice.Equal(i(0)) && test.nextPrice.GreaterThan(i(0))
+			c(test)
+			test.absoluteThreshold = 1e-307
+			// that absoluteThreshold is crossed, as long as prices aren't exactly equal
+			test.expectation = !test.curPrice.Equal(test.nextPrice)
+			c(test)
 		})
 	}
 }
