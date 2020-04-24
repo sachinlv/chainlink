@@ -47,7 +47,7 @@ type Service interface {
 	Stop()
 }
 
-type ConcreteFluxMonitor struct {
+type concreteFluxMonitor struct {
 	store          *store.Store
 	runManager     RunManager
 	logBroadcaster eth.LogBroadcaster
@@ -73,7 +73,7 @@ func New(
 	runManager RunManager,
 ) Service {
 	if store.Config.EthereumDisabled() {
-		return &ConcreteFluxMonitor{disabled: true}
+		return &concreteFluxMonitor{disabled: true}
 	}
 
 	logBroadcaster := eth.NewLogBroadcaster(store.TxManager, store.ORM, 10)
@@ -94,7 +94,7 @@ func New(
 	}
 }
 
-func (fm *ConcreteFluxMonitor) Start() error {
+func (fm *concreteFluxMonitor) Start() error {
 	if fm.disabled {
 		logger.Info("Flux monitor disabled: skipping start")
 		return nil
@@ -130,7 +130,7 @@ func (fm *ConcreteFluxMonitor) Start() error {
 }
 
 // Disconnect cleans up running deviation checkers.
-func (fm *ConcreteFluxMonitor) Stop() {
+func (fm *concreteFluxMonitor) Stop() {
 	if fm.disabled {
 		logger.Info("Flux monitor disabled: cannot stop")
 		return
@@ -144,7 +144,7 @@ func (fm *ConcreteFluxMonitor) Stop() {
 // serveInternalRequests handles internal requests for state change via
 // channels.  Inspired by the ideas of Communicating Sequential Processes, or
 // CSP.
-func (fm *ConcreteFluxMonitor) serveInternalRequests() {
+func (fm *concreteFluxMonitor) serveInternalRequests() {
 	defer close(fm.chDone)
 
 	jobMap := map[models.ID][]DeviationChecker{}
@@ -185,7 +185,7 @@ func (fm *ConcreteFluxMonitor) serveInternalRequests() {
 
 // AddJob created a DeviationChecker for any job initiators of type
 // InitiatorFluxMonitor.
-func (fm *ConcreteFluxMonitor) AddJob(job models.JobSpec) error {
+func (fm *concreteFluxMonitor) AddJob(job models.JobSpec) error {
 	if job.ID == nil {
 		err := errors.New("received job with nil ID")
 		logger.Error(err)
@@ -217,7 +217,7 @@ func (fm *ConcreteFluxMonitor) AddJob(job models.JobSpec) error {
 
 // RemoveJob stops and removes the checker for all Flux Monitor initiators belonging
 // to the passed job ID.
-func (fm *ConcreteFluxMonitor) RemoveJob(id *models.ID) {
+func (fm *concreteFluxMonitor) RemoveJob(id *models.ID) {
 	if id == nil {
 		logger.Warn("nil job ID passed to FluxMonitor#RemoveJob")
 		return
@@ -227,7 +227,7 @@ func (fm *ConcreteFluxMonitor) RemoveJob(id *models.ID) {
 
 // XXXTestingOnlyCreateJob creates a job with a specific answer and round, for
 // testing nodes with malicious behavior
-func (fm *ConcreteFluxMonitor) XXXTestingOnlyCreateJob(t *testing.T,
+func (fm *concreteFluxMonitor) XXXTestingOnlyCreateJob(t *testing.T,
 	jobSpecId *models.ID, polledAnswer decimal.Decimal,
 	nextRound *big.Int) error {
 	jobSpec, err := fm.store.ORM.FindJob(jobSpecId)
