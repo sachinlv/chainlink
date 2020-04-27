@@ -7,3 +7,8 @@ INSERT INTO users (email, hashed_password, created_at) VALUES (
     '$2a$10$bbwErtZcZ6qQvRsfBiY2POvuY6D4lwj/Vxq/PcVAL6o64nRaPgaEa', -- hash of literal string 'password'
     NOW()
 );
+INSERT INTO sessions (id, last_used, created_at) VALUES (
+    'test-session',
+    NOW(),
+    NOW()
+);

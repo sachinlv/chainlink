@@ -47,7 +47,6 @@ func TestTerminalCookieAuthenticator_AuthenticateWithSession(t *testing.T) {
 	app, cleanup := cltest.NewApplication(t, cltest.EthMockRegisterChainID)
 	defer cleanup()
 	require.NoError(t, app.Start())
-	app.MustSeedUserSession()
 
 	tests := []struct {
 		name, email, pwd string

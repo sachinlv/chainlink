@@ -303,7 +303,6 @@ func TestJobSpecsController_Create_FluxMonitor_disabled(t *testing.T) {
 	require.NoError(t, app.Start())
 
 	client := app.NewHTTPClient()
-	time.Sleep(999999999999)
 
 	jsonStr := cltest.MustReadFile(t, "testdata/flux_monitor_job.json")
 	resp, cleanup := client.Post("/v2/specs", bytes.NewBuffer(jsonStr))

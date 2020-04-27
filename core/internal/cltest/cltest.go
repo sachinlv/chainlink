@@ -61,7 +61,7 @@ const (
 	// Password the password
 	Password = "password"
 	// APISessionID ID for API user
-	APISessionID = "session"
+	APISessionID = "test-session"
 	// SessionSecret is the hardcoded secret solely used for test
 	SessionSecret = "clsession_test_secret"
 )
@@ -350,16 +350,6 @@ func (ta *TestApplication) Stop() error {
 	return nil
 }
 
-func (ta *TestApplication) MustSeedUserSession() models.User {
-	// TODO: panic("remove this~")
-	// mockUser := MustUser(APIEmail, Password)
-	// require.NoError(ta.t, ta.Store.SaveUser(&mockUser))
-	session := NewSession(APISessionID)
-	require.NoError(ta.t, ta.Store.SaveSession(&session))
-	return mockUser
-}
-
-// MustSeedUserAPIKey creates and returns a User with their API Token Key and
 // Secret generated.
 func (ta *TestApplication) MustSeedUserAPIKey() models.User {
 	mockUser := MustUser(ta.Config.AdvisoryLockID)
@@ -385,7 +375,6 @@ func (ta *TestApplication) AddUnlockedKey() {
 func (ta *TestApplication) NewHTTPClient() HTTPClientCleaner {
 	ta.t.Helper()
 
-	ta.MustSeedUserSession()
 	return HTTPClientCleaner{
 		HTTPClient: NewMockAuthenticatedHTTPClient(ta.Config),
 		t:          ta.t,
@@ -394,7 +383,6 @@ func (ta *TestApplication) NewHTTPClient() HTTPClientCleaner {
 
 // NewClientAndRenderer creates a new cmd.Client for the test application
 func (ta *TestApplication) NewClientAndRenderer() (*cmd.Client, *RendererMock) {
-	ta.MustSeedUserSession()
 	r := &RendererMock{}
 	client := &cmd.Client{
 		Renderer:                       r,
@@ -413,7 +401,6 @@ func (ta *TestApplication) NewClientAndRenderer() (*cmd.Client, *RendererMock) {
 }
 
 func (ta *TestApplication) NewAuthenticatingClient(prompter cmd.Prompter) *cmd.Client {
-	ta.MustSeedUserSession()
 	cookieAuth := cmd.NewSessionCookieAuthenticator(ta.Config.Config, &cmd.MemoryCookieStore{})
 	client := &cmd.Client{
 		Renderer:                       &RendererMock{},
