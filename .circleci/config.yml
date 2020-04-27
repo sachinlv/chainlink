@@ -16,6 +16,7 @@ jobs:
       - restore_cache:
           name: Restore Yarn Package Cache
           key: v{{ checksum "cache.version" }}-yarn-vendor-{{ checksum "yarn.lock" }}
+      - run: ./tools/bin/restore-solc-cache
       - run: make yarndep
       - save_cache:
           name: Save Yarn Package Cache
