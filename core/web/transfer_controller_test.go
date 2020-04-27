@@ -19,7 +19,7 @@ func TestTransfersController_CreateSuccess(t *testing.T) {
 	t.Parallel()
 
 	config, _ := cltest.NewConfig(t)
-	app, cleanup := cltest.NewApplicationWithConfigAndRandomKey(t, config)
+	app, cleanup := cltest.NewApplicationWithConfigAndKey(t, config)
 	defer cleanup()
 
 	ethMock := app.EthMock
@@ -55,7 +55,7 @@ func TestTransfersController_CreateSuccess_From(t *testing.T) {
 	t.Parallel()
 
 	config, _ := cltest.NewConfig(t)
-	app, cleanup := cltest.NewApplicationWithConfigAndRandomKey(t, config)
+	app, cleanup := cltest.NewApplicationWithConfigAndKey(t, config)
 	defer cleanup()
 
 	ethMock := app.EthMock
@@ -92,7 +92,7 @@ func TestTransfersController_TransferError(t *testing.T) {
 	t.Parallel()
 
 	config, _ := cltest.NewConfig(t)
-	app, cleanup := cltest.NewApplicationWithConfigAndRandomKey(t, config)
+	app, cleanup := cltest.NewApplicationWithConfigAndKey(t, config)
 	defer cleanup()
 
 	ethMock := app.EthMock
@@ -126,7 +126,7 @@ func TestTransfersController_JSONBindingError(t *testing.T) {
 	t.Parallel()
 
 	config, _ := cltest.NewConfig(t)
-	app, cleanup := cltest.NewApplicationWithConfigAndRandomKey(t, config)
+	app, cleanup := cltest.NewApplicationWithConfigAndKey(t, config)
 	defer cleanup()
 
 	ethMock := app.EthMock

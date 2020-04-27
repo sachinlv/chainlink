@@ -1,7 +1,6 @@
 package cltest
 
 import (
-	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -243,36 +242,36 @@ func NewApplication(t testing.TB, flags ...string) (*TestApplication, func()) {
 	}
 }
 
-// NewApplicationWithFixtureKey creates a new application with the given key
+// NewApplicationWithKey creates a new application with the given key
 // Careful not to use the same key in different tests, since this may result in
 // deadlocks when running tests concurrently (keys.address unique index)
-func NewApplicationWithFixtureKey(t testing.TB, keyStoreJSON string) (*TestApplication, func()) {
+// func NewApplicationWithKey(t testing.TB, keyStoreJSON string) (*TestApplication, func()) {
+//     t.Helper()
+
+//     config, cfgCleanup := NewConfig(t)
+//     app, cleanup := NewApplicationWithConfig(t, config)
+//     app.ImportKey(keyStoreJSON)
+//     return app, func() {
+//         cleanup()
+//         cfgCleanup()
+//     }
+// }
+
+// NewApplicationWithKey creates a new TestApplication along with a new config
+func NewApplicationWithKey(t testing.TB, flags ...string) (*TestApplication, func()) {
 	t.Helper()
 
 	config, cfgCleanup := NewConfig(t)
-	app, cleanup := NewApplicationWithConfig(t, config)
-	app.ImportKey(keyStoreJSON)
+	app, cleanup := NewApplicationWithConfigAndKey(t, config, flags...)
 	return app, func() {
 		cleanup()
 		cfgCleanup()
 	}
 }
 
-// NewApplicationWithRandomKey creates a new TestApplication along with a new config
-func NewApplicationWithRandomKey(t testing.TB, flags ...string) (*TestApplication, func()) {
-	t.Helper()
-
-	config, cfgCleanup := NewConfig(t)
-	app, cleanup := NewApplicationWithConfigAndRandomKey(t, config, flags...)
-	return app, func() {
-		cleanup()
-		cfgCleanup()
-	}
-}
-
-// NewApplicationWithConfigAndRandomKey creates a new TestApplication with the given testconfig
+// NewApplicationWithConfigAndKey creates a new TestApplication with the given testconfig
 // it will also provide an unlocked account on the keystore
-func NewApplicationWithConfigAndRandomKey(t testing.TB, tc *TestConfig, flags ...string) (*TestApplication, func()) {
+func NewApplicationWithConfigAndKey(t testing.TB, tc *TestConfig, flags ...string) (*TestApplication, func()) {
 	t.Helper()
 
 	app, cleanup := NewApplicationWithConfig(t, tc, flags...)
@@ -285,26 +284,26 @@ func NewApplicationWithConfigAndRandomKey(t testing.TB, tc *TestConfig, flags ..
 	//     t.Fatal(err)
 	// }
 	// app.Account = acct
-	file, err := os.Open("../internal/fixtures/keys.txt")
-	if err != nil {
-		t.Fatal(err)
-	}
-	defer file.Close()
-	scanner := bufio.NewScanner(file)
+	// file, err := os.Open("../internal/fixtures/keys.txt")
+	// if err != nil {
+	//     t.Fatal(err)
+	// }
+	// defer file.Close()
+	// scanner := bufio.NewScanner(file)
 
-	keyID := rand.Intn(100)
-	i := 0
-	for scanner.Scan() {
-		if i == keyID {
-			app.ImportKey(scanner.Text())
-			break
-		}
-		i++
-	}
+	// keyID := rand.Intn(100)
+	// i := 0
+	// for scanner.Scan() {
+	//     if i == keyID {
+	//         app.ImportKey(scanner.Text())
+	//         break
+	//     }
+	//     i++
+	// }
 
-	if err := scanner.Err(); err != nil {
-		t.Fatal(err)
-	}
+	// if err := scanner.Err(); err != nil {
+	//     t.Fatal(err)
+	// }
 
 	return app, cleanup
 }

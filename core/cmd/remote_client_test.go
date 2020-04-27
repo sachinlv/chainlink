@@ -24,7 +24,7 @@ import (
 func TestClient_DisplayAccountBalance(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
+	app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
 	defer cleanup()
 	app.EthMock.Register("eth_getBalance", "0x0100")
 	app.EthMock.Register("eth_call", "0x0100")
@@ -167,7 +167,7 @@ var EndAt = time.Now().AddDate(0, 10, 0).Round(time.Second).UTC()
 func TestClient_CreateServiceAgreement(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
+	app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
 	defer cleanup()
 	require.NoError(t, app.Start())
 
@@ -229,7 +229,7 @@ func TestClient_CreateExternalInitiator(t *testing.T) {
 	for _, tt := range tests {
 		test := tt
 		t.Run(test.name, func(t *testing.T) {
-			app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
+			app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
 			defer cleanup()
 			require.NoError(t, app.Start())
 
@@ -268,7 +268,7 @@ func TestClient_CreateExternalInitiator_Errors(t *testing.T) {
 	for _, tt := range tests {
 		test := tt
 		t.Run(test.name, func(t *testing.T) {
-			app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
+			app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
 			defer cleanup()
 			require.NoError(t, app.Start())
 
@@ -676,7 +676,7 @@ func setupWithdrawalsApplication(t *testing.T) (*cltest.TestApplication, func())
 	config, _ := cltest.NewConfig(t)
 	oca := common.HexToAddress("0xDEADB3333333F")
 	config.Set("ORACLE_CONTRACT_ADDRESS", &oca)
-	app, cleanup := cltest.NewApplicationWithConfigAndRandomKey(t, config)
+	app, cleanup := cltest.NewApplicationWithConfigAndKey(t, config)
 
 	nonce := "0x100"
 
@@ -776,7 +776,7 @@ func TestClient_ChangePassword(t *testing.T) {
 func TestClient_IndexTransactions(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
+	app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
 	defer cleanup()
 	require.NoError(t, app.Start())
 
@@ -811,7 +811,7 @@ func TestClient_IndexTransactions(t *testing.T) {
 func TestClient_ShowTransaction(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
+	app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
 	defer cleanup()
 	require.NoError(t, app.Start())
 
@@ -833,7 +833,7 @@ func TestClient_ShowTransaction(t *testing.T) {
 func TestClient_IndexTxAttempts(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
+	app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
 	defer cleanup()
 	require.NoError(t, app.Start())
 
@@ -916,7 +916,7 @@ func TestClient_SetMinimumGasPrice(t *testing.T) {
 func TestClient_GetConfiguration(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithRandomKey(t, cltest.LenientEthMock)
+	app, cleanup := cltest.NewApplicationWithKey(t, cltest.LenientEthMock)
 	defer cleanup()
 	require.NoError(t, app.Start())
 

@@ -17,7 +17,7 @@ import (
 func TestTxAttemptsController_Index_Success(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithRandomKey(t)
+	app, cleanup := cltest.NewApplicationWithKey(t)
 	defer cleanup()
 
 	ethMock := app.EthMock
@@ -56,7 +56,7 @@ func TestTxAttemptsController_Index_Success(t *testing.T) {
 func TestTxAttemptsController_Index_Error(t *testing.T) {
 	t.Parallel()
 
-	app, cleanup := cltest.NewApplicationWithRandomKey(t)
+	app, cleanup := cltest.NewApplicationWithKey(t)
 	defer cleanup()
 	app.EthMock.Context("app.Start()", func(meth *cltest.EthMock) {
 		meth.Register("eth_getTransactionCount", "0x1")

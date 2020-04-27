@@ -303,12 +303,13 @@ func (cli *Client) ResetDatabase(c *clipkg.Context) error {
 		return cli.errorOut(errors.New("You must set DATABASE_URL env variable. HINT: If you are running this to set up your local test database, try DATABASE_URL=postgresql://postgres@localhost:5432/chainlink_test?sslmode=disable"))
 	}
 	logger.Infof("Resetting database: %#v", config.DatabaseURL())
-	err := dropAndCreateTestDB(config)
-	if err != nil {
+	if err := dropAndCreateTestDB(config); err != nil {
 		return cli.errorOut(err)
 	}
-	err = migrateTestDB(config)
-	if err != nil {
+	if err := migrateTestDB(config); err != nil {
+		return cli.errorOut(err)
+	}
+	if err := insertFixtures(config); err != nil {
 		return cli.errorOut(err)
 	}
 
@@ -357,6 +358,21 @@ func migrateTestDB(config *orm.Config) error {
 	}
 	orm.SetLogging(config.LogSQLStatements())
 	return orm.Close()
+}
+
+func insertFixtures(config *orm.Config) error {
+	db, err := sql.Open(string(orm.DialectPostgres), config.DatabaseURL())
+	if err != nil {
+		return fmt.Errorf("unable to open postgres database for creating test db: %+v", err)
+	}
+	defer db.Close()
+
+	fixturesSQL, err := ioutil.ReadFile("fixtures.sql")
+	if err != nil {
+		return err
+	}
+	_, err = db.Exec(string(fixturesSQL))
+	return err
 }
 
 // DeleteUser is run locally to remove the User row from the node's database.

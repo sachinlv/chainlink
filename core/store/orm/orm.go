@@ -1158,7 +1158,6 @@ func (orm *ORM) BulkDeleteRuns(bulkQuery *models.BulkDeleteRunRequest) error {
 	})
 }
 
-// Keys returns all keys stored in the orm.
 func (orm *ORM) Keys() ([]*models.Key, error) {
 	orm.MustEnsureAdvisoryLock()
 	var keys []*models.Key
