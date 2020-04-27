@@ -367,6 +367,7 @@ func insertFixtures(config *orm.Config) error {
 	}
 	defer db.Close()
 
+	// return nil
 	fixturesSQL, err := ioutil.ReadFile("fixtures.sql")
 	if err != nil {
 		return err

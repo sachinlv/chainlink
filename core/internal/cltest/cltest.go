@@ -242,21 +242,6 @@ func NewApplication(t testing.TB, flags ...string) (*TestApplication, func()) {
 	}
 }
 
-// NewApplicationWithKey creates a new application with the given key
-// Careful not to use the same key in different tests, since this may result in
-// deadlocks when running tests concurrently (keys.address unique index)
-// func NewApplicationWithKey(t testing.TB, keyStoreJSON string) (*TestApplication, func()) {
-//     t.Helper()
-
-//     config, cfgCleanup := NewConfig(t)
-//     app, cleanup := NewApplicationWithConfig(t, config)
-//     app.ImportKey(keyStoreJSON)
-//     return app, func() {
-//         cleanup()
-//         cfgCleanup()
-//     }
-// }
-
 // NewApplicationWithKey creates a new TestApplication along with a new config
 func NewApplicationWithKey(t testing.TB, flags ...string) (*TestApplication, func()) {
 	t.Helper()
@@ -275,7 +260,7 @@ func NewApplicationWithConfigAndKey(t testing.TB, tc *TestConfig, flags ...strin
 	t.Helper()
 
 	app, cleanup := NewApplicationWithConfig(t, tc, flags...)
-	app.ImportKey(key3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea)
+	// app.ImportKey(key3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea)
 
 	return app, cleanup
 }
