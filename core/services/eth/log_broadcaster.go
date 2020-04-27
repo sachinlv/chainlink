@@ -136,21 +136,6 @@ func (sub managedSubscription) Unsubscribe() {
 	close(sub.chRawLogs)
 }
 
-func NewLogBroadcaster(ethClient eth.Client, orm *orm.ORM, logBroadcasterCursorName string) LogBroadcaster {
-	return &logBroadcaster{
-		ethClient:                ethClient,
-		orm:                      orm,
-		logBroadcasterCursorName: logBroadcasterCursorName,
-		listeners:                make(map[common.Address]map[LogListener]struct{}),
-		chAddListener:            make(chan registration),
-		chRemoveListener:         make(chan registration),
-		chStop:                   make(chan struct{}),
-		chDone:                   make(chan struct{}),
-	}
-}
-
-const logBroadcasterCursorName = "logBroadcaster"
-
 func (b *logBroadcaster) Start() {
 	go b.awaitInitialSubscribers()
 }
@@ -315,21 +300,6 @@ func (b *logBroadcaster) notifyDisconnect() {
 	}
 }
 
-<<<<<<< HEAD
-func (b *logBroadcaster) updateLogCursor(blockIdx, logIdx uint64) {
-	b.cursor.Initialized = true
-	b.cursor.Name = b.logBroadcasterCursorName
-	b.cursor.BlockIndex = blockIdx
-	b.cursor.LogIndex = logIdx
-
-	err := b.orm.SaveLogCursor(&b.cursor)
-	if err != nil {
-		logger.Error("can't save log cursor to DB:", err)
-	}
-}
-
-=======
->>>>>>> origin/logbroadcaster-ignore-removed-logs
 func (b *logBroadcaster) process(subscription eth.Subscription, chRawLogs <-chan eth.Log) (shouldResubscribe bool, _ error) {
 	// We debounce requests to subscribe and unsubscribe to avoid making too many
 	// RPC calls to the Ethereum node, particularly on startup.

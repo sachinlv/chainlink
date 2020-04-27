@@ -77,7 +77,7 @@ var (
 )
 
 // NewORM initializes a new database file at the configured uri.
-func NewORM(uri string, timeout time.Duration, shutdownSignal gracefulpanic.Signal, dialect DialectName, advisoryLockID int64) (*ORM, error) {
+func NewORM(uri string, timeout models.Duration, shutdownSignal gracefulpanic.Signal, dialect DialectName, advisoryLockID int64) (*ORM, error) {
 	if dialect == "" {
 		// Postgres is the default
 		// TODO: Can we raise error here instead on empty string?

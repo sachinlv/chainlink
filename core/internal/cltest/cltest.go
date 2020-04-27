@@ -1,6 +1,7 @@
 package cltest
 
 import (
+	"bufio"
 	"bytes"
 	"encoding/json"
 	"errors"
@@ -91,7 +92,7 @@ func init() {
 	// Seed the random number generator, otherwise separate modules will take
 	// the same advisory locks when tested with `go test -p N` for N > 1
 	seed := time.Now().UTC().UnixNano()
-	logger.Debug("Using seed: %v", seed)
+	logger.Debugf("Using seed: %v", seed)
 	rand.Seed(seed)
 }
 
@@ -279,13 +280,32 @@ func NewApplicationWithConfigAndRandomKey(t testing.TB, tc *TestConfig, flags ..
 	// NewAccount consumes a large amount of entropy by requiring
 	// cryptographically secure random numbers which might cause test slowdowns
 	// on CI. Not sure how to manage this.
-	acct, err := app.Store.KeyStore.NewAccount(Password)
+	// acct, err := app.Store.KeyStore.NewAccount(Password)
+	// if err != nil {
+	//     t.Fatal(err)
+	// }
+	// app.Account = acct
+	file, err := os.Open("../internal/fixtures/keys.txt")
 	if err != nil {
 		t.Fatal(err)
 	}
-	app.Account = acct
-	// fmt.Println(randomKey())
-	// app.ImportKey(randomKey())
+	defer file.Close()
+	scanner := bufio.NewScanner(file)
+
+	keyID := rand.Intn(100)
+	i := 0
+	for scanner.Scan() {
+		if i == keyID {
+			app.ImportKey(scanner.Text())
+			break
+		}
+		i++
+	}
+
+	if err := scanner.Err(); err != nil {
+		t.Fatal(err)
+	}
+
 	return app, cleanup
 }
 
