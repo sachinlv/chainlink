@@ -8,7 +8,7 @@ INSERT INTO users (email, hashed_password, created_at) VALUES (
     NOW()
 );
 INSERT INTO sessions (id, last_used, created_at) VALUES (
-    'test-session',
+    'session',
     NOW(),
     NOW()
 );

@@ -61,7 +61,7 @@ const (
 	// Password the password
 	Password = "password"
 	// APISessionID ID for API user
-	APISessionID = "test-session"
+	APISessionID = "session"
 	// SessionSecret is the hardcoded secret solely used for test
 	SessionSecret = "clsession_test_secret"
 )
