@@ -372,6 +372,7 @@ func insertFixtures(config *orm.Config) error {
 	if err != nil {
 		return err
 	}
+	fmt.Println(string(fixturesSQL))
 	_, err = db.Exec(string(fixturesSQL))
 	return err
 }

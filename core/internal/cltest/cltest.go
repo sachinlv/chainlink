@@ -351,8 +351,9 @@ func (ta *TestApplication) Stop() error {
 }
 
 func (ta *TestApplication) MustSeedUserSession() models.User {
-	mockUser := MustUser(ta.Config.AdvisoryLockID)
-	require.NoError(ta.t, ta.Store.SaveUser(&mockUser))
+	// TODO: panic("remove this~")
+	// mockUser := MustUser(APIEmail, Password)
+	// require.NoError(ta.t, ta.Store.SaveUser(&mockUser))
 	session := NewSession(APISessionID)
 	require.NoError(ta.t, ta.Store.SaveSession(&session))
 	return mockUser
