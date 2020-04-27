@@ -275,35 +275,7 @@ func NewApplicationWithConfigAndKey(t testing.TB, tc *TestConfig, flags ...strin
 	t.Helper()
 
 	app, cleanup := NewApplicationWithConfig(t, tc, flags...)
-	// FIXME: We need to generate different, random, valid keys here.
-	// NewAccount consumes a large amount of entropy by requiring
-	// cryptographically secure random numbers which might cause test slowdowns
-	// on CI. Not sure how to manage this.
-	// acct, err := app.Store.KeyStore.NewAccount(Password)
-	// if err != nil {
-	//     t.Fatal(err)
-	// }
-	// app.Account = acct
-	// file, err := os.Open("../internal/fixtures/keys.txt")
-	// if err != nil {
-	//     t.Fatal(err)
-	// }
-	// defer file.Close()
-	// scanner := bufio.NewScanner(file)
-
-	// keyID := rand.Intn(100)
-	// i := 0
-	// for scanner.Scan() {
-	//     if i == keyID {
-	//         app.ImportKey(scanner.Text())
-	//         break
-	//     }
-	//     i++
-	// }
-
-	// if err := scanner.Err(); err != nil {
-	//     t.Fatal(err)
-	// }
+	app.ImportKey(key3cb8e3fd9d27e39a5e9e6852b0e96160061fd4ea)
 
 	return app, cleanup
 }
