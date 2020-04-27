@@ -21,14 +21,17 @@ const (
 )
 
 // MustHelloWorldAgreement returns a hello world agreement with the provided address added to the Oracle whitelist
-func MustHelloWorldAgreement(t *testing.T, oracleAddress gethCommon.Address) string {
+func MustHelloWorldAgreement(t *testing.T, oracleAddress ...gethCommon.Address) string {
 	template := MustReadFile(t, "testdata/hello_world_agreement.json")
-	oracles := []string{oracleAddress.Hex()}
-	sa, err := sjson.SetBytes(template, "oracles", oracles)
-	if err != nil {
-		t.Fatal(err)
+	if len(oracleAddress) > 0 {
+		oracles := []string{oracleAddress[0].Hex()}
+		sa, err := sjson.SetBytes(template, "oracles", oracles)
+		if err != nil {
+			t.Fatal(err)
+		}
+		template = sa
 	}
-	return string(sa)
+	return string(template)
 
 }
 

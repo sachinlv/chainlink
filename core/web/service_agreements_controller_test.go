@@ -81,7 +81,7 @@ func TestServiceAgreementsController_Create_isIdempotent(t *testing.T) {
 
 	client := app.NewHTTPClient()
 
-	base := cltest.MustHelloWorldAgreement(t, app.Account.Address)
+	base := cltest.MustHelloWorldAgreement(t)
 	base = strings.Replace(base, "2019-10-19T22:17:19Z", endAtISO8601, 1)
 	reader := bytes.NewBuffer([]byte(base))
 
